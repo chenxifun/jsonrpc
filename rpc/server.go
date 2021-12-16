@@ -8,7 +8,10 @@ import (
 	"sync/atomic"
 )
 
-const MetadataApi = "rpc"
+const (
+	MetadataApi     = "rpc"
+	MetadataVersion = "1.0"
+)
 
 type CodecOption int
 
@@ -25,7 +28,7 @@ func NewServer() *Server {
 	// Register the default service providing meta information about the RPC service such
 	// as the services and methods it offers.
 	rpcService := &RPCService{server}
-	server.RegisterName(MetadataApi, rpcService)
+	server.RegisterName(MetadataApi, MetadataVersion, rpcService)
 	return server
 }
 
@@ -33,8 +36,8 @@ func NewServer() *Server {
 // methods on the given receiver match the criteria to be either a RPC method or a
 // subscription an error is returned. Otherwise a new service is created and added to the
 // service collection this server provides to clients.
-func (s *Server) RegisterName(name string, receiver interface{}) error {
-	return s.services.registerName(name, receiver)
+func (s *Server) RegisterName(name, version string, receiver interface{}) error {
+	return s.services.registerName(name, version, receiver)
 }
 
 // ServeCodec reads incoming requests from codec, calls the appropriate callback and writes
@@ -111,8 +114,8 @@ func (s *RPCService) Modules() map[string]string {
 	defer s.server.services.mu.Unlock()
 
 	modules := make(map[string]string)
-	for name := range s.server.services.services {
-		modules[name] = "1.0"
+	for name, s := range s.server.services.services {
+		modules[name] = s.version
 	}
 	return modules
 }

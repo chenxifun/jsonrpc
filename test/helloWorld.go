@@ -29,6 +29,12 @@ func NewHello() *HelloWorld {
 	return h
 }
 
+type HelloSay interface {
+	Hello(ctx context.Context, name string) (string, error)
+	How(ctx context.Context, what string) (string, error)
+	Say(ctx context.Context, name, what string) (string, error)
+}
+
 type HelloWorld struct {
 	sub chan *subdata
 }

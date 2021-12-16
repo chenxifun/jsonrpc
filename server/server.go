@@ -15,7 +15,7 @@ func NewServer(conf config.Config) *Server {
 		log:  log.DefLogger(),
 	}
 
-	s.server = newNETServer(log.DefLogger(), rpc.DefaultHTTPTimeouts)
+	s.server = newNETServer(log.DefLogger(), GetTimeouts(&conf))
 
 	return s
 }
@@ -30,37 +30,63 @@ func (s *Server) RegisterService(api rpc.API) error {
 
 	apis := []rpc.API{api}
 
-	err := s.server.enableWS(apis, wsConfig{
-		Origins: []string{"*"},
-		Modules: []string{"test"},
-	})
+	if s.conf.EnableWS {
+		err := s.server.enableWS(apis, wsConfig{
+			Origins: s.conf.Origins,
+			Modules: []string{api.Namespace},
+		})
+		if err != nil {
+			return err
+		}
+	}
+	if s.conf.EnableRPC {
+		err := s.server.enableRPC(apis, httpConfig{
+			Modules:            []string{api.Namespace},
+			Vhosts:             s.conf.Vhosts,
+			CorsAllowedOrigins: s.conf.Cors,
+		})
 
-	err = s.server.enableRPC(apis, httpConfig{
-		Modules:            []string{"test"},
-		Vhosts:             s.conf.Vhosts,
-		CorsAllowedOrigins: s.conf.Cors,
-	})
+		if err != nil {
+			return err
+		}
+	}
 
-	return err
+	return nil
 }
 
 func (s *Server) RegisterServices(apis []rpc.API, modules []string) error {
 
-	err := s.server.enableWS(apis, wsConfig{
-		Origins: []string{"*"},
-		Modules: modules,
-	})
+	if s.conf.EnableWS {
+		err := s.server.enableWS(apis, wsConfig{
+			Origins: s.conf.Origins,
+			Modules: modules,
+		})
 
-	err = s.server.enableRPC(apis, httpConfig{
-		Modules:            modules,
-		Vhosts:             s.conf.Vhosts,
-		CorsAllowedOrigins: s.conf.Cors,
-	})
+		if err != nil {
+			return err
+		}
+	}
 
-	return err
+	if s.conf.EnableRPC {
+		err := s.server.enableRPC(apis, httpConfig{
+			Modules:            modules,
+			Vhosts:             s.conf.Vhosts,
+			CorsAllowedOrigins: s.conf.Cors,
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) Start() error {
+
+	if !s.conf.EnableRPC && !s.conf.EnableWS {
+		return fmt.Errorf("WS and RPC must have one open")
+	}
 
 	err := s.server.setListenAddr(s.conf.Hosts, s.conf.Port)
 	if err != nil {

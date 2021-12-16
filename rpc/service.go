@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/chenxifun/jsonrpc/log"
 	"reflect"
 	"runtime"
 	"strings"
@@ -41,7 +42,8 @@ type serviceRegistry struct {
 
 // service represents a registered object.
 type service struct {
-	name          string               // name for service
+	name          string // name for service
+	version       string
 	callbacks     map[string]*callback // registered handlers
 	subscriptions map[string]*callback // available subscriptions/notifications
 }
@@ -56,7 +58,7 @@ type callback struct {
 	isSubscribe bool           // true if this is a subscription callback
 }
 
-func (r *serviceRegistry) registerName(name string, rcvr interface{}) error {
+func (r *serviceRegistry) registerName(name, version string, rcvr interface{}) error {
 	rcvrVal := reflect.ValueOf(rcvr)
 	if name == "" {
 		return fmt.Errorf("no service name for type %s", rcvrVal.Type().String())
@@ -75,16 +77,19 @@ func (r *serviceRegistry) registerName(name string, rcvr interface{}) error {
 	if !ok {
 		svc = service{
 			name:          name,
+			version:       version,
 			callbacks:     make(map[string]*callback),
 			subscriptions: make(map[string]*callback),
 		}
 		r.services[name] = svc
 	}
-	for name, cb := range callbacks {
+	for method, cb := range callbacks {
 		if cb.isSubscribe {
-			svc.subscriptions[name] = cb
+			log.DefLogger().Debug("register subscription is %s_%s", name, method)
+			svc.subscriptions[method] = cb
 		} else {
-			svc.callbacks[name] = cb
+			log.DefLogger().Debug("register method is %s_%s", name, method)
+			svc.callbacks[method] = cb
 		}
 	}
 	return nil

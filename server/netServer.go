@@ -3,9 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/chenxifun/jsonrpc/config"
 	"github.com/chenxifun/jsonrpc/log"
 	"github.com/chenxifun/jsonrpc/node"
 	"github.com/chenxifun/jsonrpc/rpc"
+
 	"net"
 	"net/http"
 	"sort"
@@ -328,7 +330,7 @@ func RegisterApisFromWhitelist(apis []rpc.API, modules []string, srv *rpc.Server
 	// Register all the APIs exposed by the services
 	for _, api := range apis {
 		if exposeAll || whitelist[api.Namespace] || (len(whitelist) == 0 && api.Public) {
-			if err := srv.RegisterName(api.Namespace, api.Service); err != nil {
+			if err := srv.RegisterName(api.Namespace, api.Version, api.Service); err != nil {
 				return err
 			}
 		}
@@ -353,4 +355,44 @@ func checkModuleAvailability(modules []string, apis []rpc.API) (bad, available [
 		}
 	}
 	return bad, available
+}
+
+// CheckTimeouts ensures that timeout values are meaningful
+func CheckConfTimeouts(conf *config.Config) {
+	if conf.ReadTimeout < time.Second {
+		log.DefLogger().Warn("Sanitizing invalid HTTP read timeout", "provided", conf.ReadTimeout, "updated", rpc.DefaultHTTPTimeouts.ReadTimeout)
+		conf.ReadTimeout = rpc.DefaultHTTPTimeouts.ReadTimeout
+	}
+	if conf.WriteTimeout < time.Second {
+		log.DefLogger().Warn("Sanitizing invalid HTTP write timeout", "provided", conf.WriteTimeout, "updated", rpc.DefaultHTTPTimeouts.WriteTimeout)
+		conf.WriteTimeout = rpc.DefaultHTTPTimeouts.WriteTimeout
+	}
+	if conf.IdleTimeout < time.Second {
+		log.DefLogger().Warn("Sanitizing invalid HTTP idle timeout", "provided", conf.IdleTimeout, "updated", rpc.DefaultHTTPTimeouts.IdleTimeout)
+		conf.IdleTimeout = rpc.DefaultHTTPTimeouts.IdleTimeout
+	}
+}
+
+// CheckTimeouts ensures that timeout values are meaningful
+func GetTimeouts(conf *config.Config) rpc.HTTPTimeouts {
+
+	if conf.ReadTimeout < time.Second {
+		log.DefLogger().Warn("Sanitizing invalid HTTP read timeout", "provided", conf.ReadTimeout, "updated", rpc.DefaultHTTPTimeouts.ReadTimeout)
+		conf.ReadTimeout = rpc.DefaultHTTPTimeouts.ReadTimeout
+	}
+	if conf.WriteTimeout < time.Second {
+		log.DefLogger().Warn("Sanitizing invalid HTTP write timeout", "provided", conf.WriteTimeout, "updated", rpc.DefaultHTTPTimeouts.WriteTimeout)
+		conf.WriteTimeout = rpc.DefaultHTTPTimeouts.WriteTimeout
+	}
+	if conf.IdleTimeout < time.Second {
+		log.DefLogger().Warn("Sanitizing invalid HTTP idle timeout", "provided", conf.IdleTimeout, "updated", rpc.DefaultHTTPTimeouts.IdleTimeout)
+		conf.IdleTimeout = rpc.DefaultHTTPTimeouts.IdleTimeout
+	}
+
+	return rpc.HTTPTimeouts{
+		ReadTimeout:  conf.ReadTimeout,
+		WriteTimeout: conf.WriteTimeout,
+		IdleTimeout:  conf.IdleTimeout,
+	}
+
 }

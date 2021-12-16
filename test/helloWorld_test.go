@@ -7,50 +7,26 @@ import (
 	"testing"
 )
 
-func TestHTTP(t *testing.T) {
-	conf := config.Config{
-		Vhosts: []string{"*"},
-		Hosts:  "",
-		Port:   8002,
-	}
-
-	srv := server.NewHTTPServer(conf)
-
-	api := rpc.API{
-		Namespace: "test",
-		Public:    true,
-		Service:   NewHello(),
-		Version:   "1.0",
-	}
-
-	err := srv.RegisterService(api)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = srv.Start()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-}
-
 func TestRPC(t *testing.T) {
 	conf := config.Config{
-		Vhosts: []string{"*"},
-		Cors:   []string{"*"},
-		Hosts:  "localhost",
-		Port:   8003,
+		Origins:   []string{"*"},
+		Vhosts:    []string{"*"},
+		Cors:      []string{"*"},
+		Hosts:     "localhost",
+		Port:      8003,
+		EnableRPC: true,
+		EnableWS:  false,
 	}
 
 	srv := server.NewServer(conf)
+	hello := NewHello()
 
+	var sayApi HelloSay = hello
 	api := rpc.API{
 		Namespace: "test",
 		Public:    true,
-		Service:   NewHello(),
-		Version:   "1.0",
+		Service:   sayApi,
+		Version:   "1.2",
 	}
 
 	err := srv.RegisterService(api)
