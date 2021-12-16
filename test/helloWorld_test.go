@@ -1,29 +1,29 @@
 package test
 
 import (
-	"github.com/chenxifun/jsonrpc"
 	"github.com/chenxifun/jsonrpc/config"
 	"github.com/chenxifun/jsonrpc/rpc"
+	"github.com/chenxifun/jsonrpc/server"
 	"testing"
 )
 
-func TestRpc(t *testing.T) {
+func TestHTTP(t *testing.T) {
 	conf := config.Config{
-		Vhosts:         []string{"*"},
-		HTTPListenAddr: "",
-		RPCPort:        8002,
+		Vhosts: []string{"*"},
+		Hosts:  "",
+		Port:   8002,
 	}
 
-	srv := jsonrpc.NewServer(conf)
+	srv := server.NewHTTPServer(conf)
 
 	api := rpc.API{
 		Namespace: "test",
 		Public:    true,
-		Service:   &HelloWorld{},
+		Service:   NewHello(),
 		Version:   "1.0",
 	}
 
-	err := srv.RegisterServices(api)
+	err := srv.RegisterService(api)
 
 	if err != nil {
 		t.Fatal(err)
@@ -34,4 +34,33 @@ func TestRpc(t *testing.T) {
 		t.Fatal(err)
 	}
 
+}
+
+func TestRPC(t *testing.T) {
+	conf := config.Config{
+		Vhosts: []string{"*"},
+		Cors:   []string{"*"},
+		Hosts:  "localhost",
+		Port:   8003,
+	}
+
+	srv := server.NewServer(conf)
+
+	api := rpc.API{
+		Namespace: "test",
+		Public:    true,
+		Service:   NewHello(),
+		Version:   "1.0",
+	}
+
+	err := srv.RegisterService(api)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = srv.Start()
+	if err != nil {
+		t.Fatal(err)
+	}
 }

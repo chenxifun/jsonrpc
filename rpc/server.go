@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"github.com/chenxifun/jsonrpc/log"
 	mapset "github.com/deckarep/golang-set"
 	"io"
 	"sync/atomic"
@@ -20,7 +21,7 @@ type Server struct {
 
 // NewServer creates a new server instance with no registered handlers.
 func NewServer() *Server {
-	server := &Server{codecs: mapset.NewSet(), run: 1} //idgen: randomIDGenerator(),
+	server := &Server{codecs: mapset.NewSet(), idgen: randomIDGenerator(), run: 1} //
 	// Register the default service providing meta information about the RPC service such
 	// as the services and methods it offers.
 	rpcService := &RPCService{server}
@@ -41,22 +42,22 @@ func (s *Server) RegisterName(name string, receiver interface{}) error {
 // server is stopped. In either case the codec is closed.
 //
 // Note that codec options are no longer supported.
-//func (s *Server) ServeCodec(codec ServerCodec, options CodecOption) {
-//	defer codec.close()
-//
-//	// Don't serve if server is stopped.
-//	if atomic.LoadInt32(&s.run) == 0 {
-//		return
-//	}
-//
-//	// Add the codec to the set so it can be closed by Stop.
-//	s.codecs.Add(codec)
-//	defer s.codecs.Remove(codec)
-//
-//	c := initClient(codec, s.idgen, &s.services)
-//	<-codec.closed()
-//	c.Close()
-//}
+func (s *Server) ServeCodec(codec ServerCodec, options CodecOption) {
+	defer codec.close()
+
+	// Don't serve if server is stopped.
+	if atomic.LoadInt32(&s.run) == 0 {
+		return
+	}
+
+	// Add the codec to the set so it can be closed by Stop.
+	s.codecs.Add(codec)
+	defer s.codecs.Remove(codec)
+
+	c := initClient(codec, s.idgen, &s.services)
+	<-codec.closed()
+	c.Close()
+}
 
 // serveSingleRequest reads and processes a single RPC request from the given codec. This
 // is used to serve HTTP connections. Subscriptions and reverse calls are not allowed in
@@ -82,6 +83,19 @@ func (s *Server) serveSingleRequest(ctx context.Context, codec ServerCodec) {
 		h.handleBatch(reqs)
 	} else {
 		h.handleMsg(reqs[0])
+	}
+}
+
+// Stop stops reading new requests, waits for stopPendingRequestTimeout to allow pending
+// requests to finish, then closes all codecs which will cancel pending requests and
+// subscriptions.
+func (s *Server) Stop() {
+	if atomic.CompareAndSwapInt32(&s.run, 1, 0) {
+		log.DefLogger().Debug("RPC server shutting down")
+		s.codecs.Each(func(c interface{}) bool {
+			c.(ServerCodec).close()
+			return true
+		})
 	}
 }
 

@@ -3,10 +3,11 @@ package config
 import "time"
 
 type Config struct {
-	Vhosts         []string
-	Cors           []string
-	HTTPListenAddr string
-	RPCPort        int
+	Vhosts []string
+	Cors   []string
+
+	Hosts string
+	Port  int
 
 	// ReadTimeout is the maximum duration for reading the entire
 	// request, including the body.

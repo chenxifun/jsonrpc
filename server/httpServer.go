@@ -1,9 +1,10 @@
-package jsonrpc
+package server
 
 import (
 	"context"
 	"fmt"
 	"github.com/chenxifun/jsonrpc/config"
+	"github.com/chenxifun/jsonrpc/log"
 	"github.com/chenxifun/jsonrpc/node"
 	"github.com/chenxifun/jsonrpc/rpc"
 	"net"
@@ -13,25 +14,49 @@ import (
 	"time"
 )
 
-func NewServer(conf config.Config) *rpcServer {
+func NewHTTPServer(conf config.Config) *httpServer {
 
-	return &rpcServer{
+	return &httpServer{
 		conf: &conf,
 		srv:  rpc.NewServer(),
+		log:  log.DefLogger(),
 	}
 }
 
-type rpcServer struct {
+type httpServer struct {
 	srv  *rpc.Server
 	conf *config.Config
+	log  log.Logger
 }
 
-func (rpc *rpcServer) RegisterServices(api rpc.API) error {
+func (rpc *httpServer) RegisterService(api rpc.API) error {
 	return rpc.srv.RegisterName(api.Namespace, api.Service)
 }
 
-func (rpc *rpcServer) Start() error {
-	httpEndpoint := fmt.Sprintf("%s:%d", rpc.conf.HTTPListenAddr, rpc.conf.RPCPort)
+func (rpc *httpServer) RegisterServices(apis []rpc.API, modules []string, exposeAll bool) error {
+	if bad, available := checkModuleAvailability(modules, apis); len(bad) > 0 {
+		rpc.log.Error("Unavailable modules in HTTP API list", "unavailable", bad, "available", available)
+	}
+
+	// Generate the whitelist based on the allowed modules
+	whitelist := make(map[string]bool)
+	for _, module := range modules {
+		whitelist[module] = true
+	}
+
+	for _, api := range apis {
+		if exposeAll || whitelist[api.Namespace] || (len(whitelist) == 0 && api.Public) {
+			if err := rpc.srv.RegisterName(api.Namespace, api.Service); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (rpc *httpServer) Start() error {
+	httpEndpoint := fmt.Sprintf("%s:%d", rpc.conf.Hosts, rpc.conf.Port)
 
 	handler := node.NewHTTPHandlerStack(rpc.srv, rpc.conf.Cors, rpc.conf.Vhosts)
 
@@ -46,7 +71,7 @@ func (rpc *rpcServer) Start() error {
 
 	}()
 
-	abortChan := make(chan os.Signal, 11)
+	abortChan := make(chan os.Signal, 1)
 	signal.Notify(abortChan, os.Interrupt)
 
 	sig := <-abortChan
@@ -55,7 +80,7 @@ func (rpc *rpcServer) Start() error {
 	return nil
 }
 
-func (rpc *rpcServer) startHTTPEndpoint(endpoint string, handler http.Handler) (*http.Server, net.Addr, error) {
+func (rpc *httpServer) startHTTPEndpoint(endpoint string, handler http.Handler) (*http.Server, net.Addr, error) {
 	// start the HTTP listener
 	var (
 		listener net.Listener
@@ -65,7 +90,7 @@ func (rpc *rpcServer) startHTTPEndpoint(endpoint string, handler http.Handler) (
 		return nil, nil, err
 	}
 	// make sure timeout values are meaningful
-	CheckTimeouts(rpc.conf)
+	CheckConfTimeouts(rpc.conf)
 	// Bundle and start the HTTP server
 	httpSrv := &http.Server{
 		Handler:      handler,
@@ -78,7 +103,7 @@ func (rpc *rpcServer) startHTTPEndpoint(endpoint string, handler http.Handler) (
 }
 
 // CheckTimeouts ensures that timeout values are meaningful
-func CheckTimeouts(conf *config.Config) {
+func CheckConfTimeouts(conf *config.Config) {
 	if conf.ReadTimeout < time.Second {
 		//log.Warn("Sanitizing invalid HTTP read timeout", "provided", timeouts.ReadTimeout, "updated", rpc.DefaultHTTPTimeouts.ReadTimeout)
 		conf.ReadTimeout = rpc.DefaultHTTPTimeouts.ReadTimeout
