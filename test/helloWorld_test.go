@@ -1,6 +1,8 @@
 package test
 
 import (
+	"context"
+	"fmt"
 	"github.com/chenxifun/jsonrpc/config"
 	"github.com/chenxifun/jsonrpc/rpc"
 	"github.com/chenxifun/jsonrpc/server"
@@ -15,21 +17,25 @@ func TestRPC(t *testing.T) {
 		Hosts:     "localhost",
 		Port:      8003,
 		EnableRPC: true,
-		EnableWS:  false,
+		EnableWS:  true,
 	}
 
 	srv := server.NewServer(conf)
-	hello := NewHello()
-
-	var sayApi HelloSay = hello
-	api := rpc.API{
+	apis := []rpc.API{rpc.API{
 		Namespace: "test",
 		Public:    true,
-		Service:   sayApi,
+		Service:   NewHello(),
 		Version:   "1.2",
+	},
+		rpc.API{
+			Namespace: "tt",
+			Public:    true,
+			Service:   NewHello(),
+			Version:   "1.2",
+		},
 	}
 
-	err := srv.RegisterService(api)
+	err := srv.RegisterServices(apis, []string{"test"})
 
 	if err != nil {
 		t.Fatal(err)
@@ -38,5 +44,48 @@ func TestRPC(t *testing.T) {
 	err = srv.Start()
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestCall(t *testing.T) {
+
+	cli, err := rpc.Dial("ws://127.0.0.1:8003")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var res string
+	err = cli.Call(&res, "test_hello", "yaya")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer cli.Close()
+	fmt.Println(res)
+
+}
+
+func TestSub(t *testing.T) {
+
+	cli, err := rpc.Dial("ws://127.0.0.1:8003")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ch := make(chan string)
+
+	sub, err := cli.Subscribe(context.Background(), "test", ch, "subTx", "txData")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer sub.Unsubscribe()
+
+	for {
+		select {
+		case res := <-ch:
+			{
+				fmt.Println(res)
+			}
+		}
 	}
 }

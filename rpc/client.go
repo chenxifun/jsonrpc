@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"reflect"
 	"strconv"
 	"sync/atomic"
@@ -155,32 +156,32 @@ func (op *requestOp) wait(ctx context.Context, c *Client) (*jsonrpcMessage, erro
 // For websocket connections, the origin is set to the local host name.
 //
 // The client reconnects automatically if the connection is lost.
-//func Dial(rawurl string) (*Client, error) {
-//	return DialContext(context.Background(), rawurl)
-//}
+func Dial(rawurl string) (*Client, error) {
+	return DialContext(context.Background(), rawurl)
+}
 
 // DialContext creates a new RPC client, just like Dial.
 //
 // The context is used to cancel or time out the initial connection establishment. It does
 // not affect subsequent interactions with the client.
-//func DialContext(ctx context.Context, rawurl string) (*Client, error) {
-//	u, err := url.Parse(rawurl)
-//	if err != nil {
-//		return nil, err
-//	}
-//	switch u.Scheme {
-//	case "http", "https":
-//		return DialHTTP(rawurl)
-//	case "ws", "wss":
-//		return DialWebsocket(ctx, rawurl, "")
-//	case "stdio":
-//		return DialStdIO(ctx)
-//	case "":
-//		return DialIPC(ctx, rawurl)
-//	default:
-//		return nil, fmt.Errorf("no known transport for URL scheme %q", u.Scheme)
-//	}
-//}
+func DialContext(ctx context.Context, rawurl string) (*Client, error) {
+	u, err := url.Parse(rawurl)
+	if err != nil {
+		return nil, err
+	}
+	switch u.Scheme {
+	case "http", "https":
+		return DialHTTP(rawurl)
+	case "ws", "wss":
+		return DialWebsocket(ctx, rawurl, "")
+	//case "stdio":
+	//	return DialStdIO(ctx)
+	//case "":
+	//	return DialIPC(ctx, rawurl)
+	default:
+		return nil, fmt.Errorf("no known transport for URL scheme %q", u.Scheme)
+	}
+}
 
 // Client retrieves the client from the context, if any. This can be used to perform
 // 'reverse calls' in a handler method.
@@ -406,15 +407,15 @@ func (c *Client) Notify(ctx context.Context, method string, args ...interface{})
 	}
 }
 
-// EthSubscribe registers a subscripion under the "eth" namespace.
-func (c *Client) EthSubscribe(ctx context.Context, channel interface{}, args ...interface{}) (*ClientSubscription, error) {
-	return c.Subscribe(ctx, "eth", channel, args...)
-}
-
-// ShhSubscribe registers a subscripion under the "shh" namespace.
-func (c *Client) ShhSubscribe(ctx context.Context, channel interface{}, args ...interface{}) (*ClientSubscription, error) {
-	return c.Subscribe(ctx, "shh", channel, args...)
-}
+//// EthSubscribe registers a subscripion under the "eth" namespace.
+//func (c *Client) EthSubscribe(ctx context.Context, channel interface{}, args ...interface{}) (*ClientSubscription, error) {
+//	return c.Subscribe(ctx, "eth", channel, args...)
+//}
+//
+//// ShhSubscribe registers a subscripion under the "shh" namespace.
+//func (c *Client) ShhSubscribe(ctx context.Context, channel interface{}, args ...interface{}) (*ClientSubscription, error) {
+//	return c.Subscribe(ctx, "shh", channel, args...)
+//}
 
 // Subscribe calls the "<namespace>_subscribe" method with the given arguments,
 // registering a subscription. Server notifications for the subscription are
