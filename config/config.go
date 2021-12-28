@@ -2,6 +2,20 @@ package config
 
 import "time"
 
+const defPort = 8003
+
+func DefaultConfig() Config {
+	return Config{
+		Origins:   []string{"*"},
+		Vhosts:    []string{"*"},
+		Cors:      []string{"*"},
+		Hosts:     "localhost",
+		Port:      defPort,
+		EnableRPC: true,
+		EnableWS:  true,
+	}
+}
+
 type Config struct {
 	Vhosts  []string
 	Cors    []string
