@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/chenxifun/jsonrpc/doc/types"
 	"github.com/chenxifun/jsonrpc/log"
 	"reflect"
 	"runtime"
@@ -38,6 +39,8 @@ var (
 type serviceRegistry struct {
 	mu       sync.Mutex
 	services map[string]service
+
+	docInfo []*types.Module
 }
 
 // service represents a registered object.
@@ -83,7 +86,17 @@ func (r *serviceRegistry) registerName(name, version string, rcvr interface{}) e
 		}
 		r.services[name] = svc
 	}
+
+	mods := &types.Module{
+		NameSpace: name,
+		Version:   version,
+		PkgPath:   rcvrVal.Type().Elem().PkgPath(),
+		Name:      rcvrVal.Type().Elem().Name(),
+	}
+
 	for method, cb := range callbacks {
+		mods.Methods = append(mods.Methods, NewMethod(method, cb))
+
 		if cb.isSubscribe {
 			log.DefLogger().Debug("register subscription is %s_%s", name, method)
 			svc.subscriptions[method] = cb
@@ -92,6 +105,9 @@ func (r *serviceRegistry) registerName(name, version string, rcvr interface{}) e
 			svc.callbacks[method] = cb
 		}
 	}
+
+	r.docInfo = append(r.docInfo, mods)
+
 	return nil
 }
 

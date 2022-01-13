@@ -3,10 +3,22 @@ package test
 import (
 	"context"
 	"fmt"
-	"github.com/chenxifun/jsonrpc/rpc"
+	r "github.com/chenxifun/jsonrpc/rpc"
 	"strings"
-	"time"
+	tt "time"
 )
+
+type Td struct {
+	// 名称
+	Name string `json:"name"`
+
+	//年龄
+	Age int `json:"age"`
+
+	Sub subdata `json:"sub"`
+
+	t tt.Time `json:"t"`
+}
 
 type subdata struct {
 	data string
@@ -35,21 +47,52 @@ type HelloSay interface {
 	Say(ctx context.Context, name, what string) (string, error)
 }
 
+type At string
+type Bt func(string) string
+
+// HelloWorld this is Hello Server
 type HelloWorld struct {
+
+	// sub chan data
 	sub chan *subdata
+	// Name 名称
+	Name string
+	// T 时间
+	T tt.Time
 }
 
+// Hello 获取一个字符串
 func (h *HelloWorld) Hello(ctx context.Context, name string) (string, error) {
 
 	fmt.Println(ctx.Value("User-Agent"))
 	return "hello," + name, nil
 }
 
-func (h *HelloWorld) Say(ctx context.Context, name, what string) (string, error) {
-
-	time.Sleep(time.Second)
+// Say say hello
+func (h *HelloWorld) Say(ctx context.Context,
+	name,
+	what string) (string, error) {
+	tt.Sleep(tt.Second)
 	fmt.Println(ctx.Value("User-Agent"))
 	return fmt.Sprintf("%s : %s", name, what), nil
+}
+
+// @title HowWhat 函数名称
+// @description   函数的详细描述
+// @param ctx 参数注释
+// @param what 参数注释
+// @param t 参数注释t
+// @return 返回值注释
+func (h *HelloWorld) HowWhat(ctx context.Context,
+	what Td,
+	t tt.Time,
+	sts []string, stt []Td, ks map[string]Td) (string, error) {
+
+	fmt.Println(ctx.Value("User-Agent"))
+
+	ss := strings.SplitN(what.Name, ":", 2)
+
+	return ss[0], nil
 }
 
 func (h *HelloWorld) How(ctx context.Context, what string) (string, error) {
@@ -61,10 +104,10 @@ func (h *HelloWorld) How(ctx context.Context, what string) (string, error) {
 	return ss[0], nil
 }
 
-func (h *HelloWorld) SubTx(ctx context.Context, txData string) (*rpc.Subscription, error) {
-	notifier, supported := rpc.NotifierFromContext(ctx)
+func (h *HelloWorld) SubTx(ctx context.Context, txData string) (*r.Subscription, error) {
+	notifier, supported := r.NotifierFromContext(ctx)
 	if !supported {
-		return &rpc.Subscription{}, rpc.ErrNotificationsUnsupported
+		return &r.Subscription{}, r.ErrNotificationsUnsupported
 	}
 	rpcSub := notifier.CreateSubscription()
 
@@ -130,7 +173,7 @@ func (h *HelloWorld) handleSub(sub *subdata) {
 				sub.tx <- fmt.Sprintf("%s:%d", sub.data, i)
 				fmt.Println("sub to ", sub.data, i)
 				i++
-				time.Sleep(time.Second)
+				tt.Sleep(tt.Second)
 			}
 
 		}

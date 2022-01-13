@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/chenxifun/jsonrpc/config"
+	"github.com/chenxifun/jsonrpc/doc/types"
 	"github.com/chenxifun/jsonrpc/log"
 	"github.com/chenxifun/jsonrpc/node"
 	"github.com/chenxifun/jsonrpc/rpc"
@@ -58,6 +59,9 @@ type netServer struct {
 	port     int
 
 	handlerNames map[string]string
+
+	mode    []string
+	docInfo []*types.Module
 }
 
 func newNETServer(log log.Logger, timeouts rpc.HTTPTimeouts) *netServer {
@@ -226,6 +230,10 @@ func (h *netServer) enableRPC(apis []rpc.API, config httpConfig) error {
 		Handler: node.NewHTTPHandlerStack(srv, config.CorsAllowedOrigins, config.Vhosts),
 		server:  srv,
 	})
+
+	h.mode = append(h.mode, "rpc")
+	h.docInfo = srv.ModsInfo()
+
 	return nil
 }
 
@@ -258,6 +266,10 @@ func (h *netServer) enableWS(apis []rpc.API, config wsConfig) error {
 		Handler: srv.WebsocketHandler(config.Origins),
 		server:  srv,
 	})
+
+	h.mode = append(h.mode, "ws")
+	h.docInfo = srv.ModsInfo()
+
 	return nil
 }
 

@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"github.com/chenxifun/jsonrpc/doc/types"
 	"github.com/chenxifun/jsonrpc/log"
 	mapset "github.com/deckarep/golang-set"
 	"io"
@@ -30,6 +31,10 @@ func NewServer() *Server {
 	rpcService := &RPCService{server}
 	server.RegisterName(MetadataApi, MetadataVersion, rpcService)
 	return server
+}
+
+func (s *Server) ModsInfo() []*types.Module {
+	return s.services.docInfo
 }
 
 // RegisterName creates a service for the given receiver type under the given name. When no

@@ -2,7 +2,10 @@ package server
 
 import (
 	"fmt"
+	go_document "github.com/chenxifun/go-document"
+	docty "github.com/chenxifun/go-document/types"
 	"github.com/chenxifun/jsonrpc/config"
+	"github.com/chenxifun/jsonrpc/doc/types"
 	"github.com/chenxifun/jsonrpc/log"
 	"github.com/chenxifun/jsonrpc/rpc"
 	"os"
@@ -110,4 +113,43 @@ func (s *Server) Start() error {
 	fmt.Println("Exiting...", "signal", sig)
 
 	return nil
+}
+
+func (s *Server) BuildDoc(d *go_document.Doc) {
+
+	srv := types.Server{Modules: s.server.docInfo}
+
+	for i, m := range srv.Modules {
+		data, ok := d.Packages[m.PkgPath]
+		if ok {
+
+			parseModels(srv.Modules[i], data)
+
+		}
+	}
+
+}
+
+func parseModels(mod *types.Module, pd *docty.PkgData) {
+	sd := pd.FindStruct(mod.Name)
+	if sd == nil {
+		return
+	}
+	mod.Describe = sd.Doc
+
+	for i, f := range mod.Methods {
+		fd := pd.FindFunc(mod.Name, f.Name)
+		parseMrthod(mod.Methods[i], fd)
+
+	}
+}
+
+func parseMrthod(f *types.Method, fd *docty.FuncData) {
+	if fd == nil {
+		return
+	}
+
+	f.Describe = fd.Description
+	f.Title = fd.Title
+
 }

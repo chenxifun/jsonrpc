@@ -1,6 +1,6 @@
 # jsonrpc
 
-从ETH拆出来的一个 `json-rpc`框架,支持`http`以及`ws`
+从ETH拆出来的一个 `json-rpc`框架,支持`http`以及`ws`  
 使用方式
 ```go
 srv := server.NewServer(config.DefaultConfig())

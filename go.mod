@@ -9,4 +9,10 @@ require (
 	github.com/rs/cors v0.0.0-20160617231935-a62a804a8a00
 	github.com/rs/xhandler v0.0.0-20170707052532-1eb70cf1520d // indirect
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
+	github.com/clearcodecn/swaggos v0.0.4-0.20210301085054-939e082a55e1
+	github.com/chenxifun/go-document v0.0.0-20220113073831-b54a994820af
 )
+
+//replace (
+//	github.com/chenxifun/go-document => D:/GoPath/src/github.com/chenxifun/go-document
+//)

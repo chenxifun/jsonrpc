@@ -6,6 +6,7 @@ import (
 	"github.com/chenxifun/jsonrpc/config"
 	"github.com/chenxifun/jsonrpc/rpc"
 	"github.com/chenxifun/jsonrpc/server"
+	"github.com/clearcodecn/swaggos"
 	"testing"
 )
 
@@ -69,4 +70,13 @@ func TestSub(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestSwagg(t *testing.T) {
+
+	y := swaggos.NewSwaggo()
+	v := NewHello()
+	y.Define(v)
+	data, _ := y.Build()
+	fmt.Println(string(data))
 }
