@@ -8,6 +8,8 @@ github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdko
 github.com/agiledragon/gomonkey/v2 v2.3.1/go.mod h1:ap1AmDzcVOAz1YpeJ3TCzIgstoaWLA6jbbgxfB4w2iY=
 github.com/chenxifun/go-document v0.0.0-20220113073831-b54a994820af h1:M+y7LiieyCbo5ZVzQWqt7KKzB3ITmE2BO48SWkC6sNc=
 github.com/chenxifun/go-document v0.0.0-20220113073831-b54a994820af/go.mod h1:+xe4YMi2xfDhALsBu3e5uVFiMrIeULfhOgwLopdQz24=
+github.com/chenxifun/go-document v0.0.0-20220118031245-fcbdb15141bb h1:s2axLxuoLi0Vae8T4Uxq6jwUuMIHJkP5irMYJR6Ls2o=
+github.com/chenxifun/go-document v0.0.0-20220118031245-fcbdb15141bb/go.mod h1:+xe4YMi2xfDhALsBu3e5uVFiMrIeULfhOgwLopdQz24=
 github.com/chenxifun/logger v1.0.1-0.20210915083252-042226af3599 h1:7ORZdLX8pl5eXnrKzRp9QgjVrxQN6Ojm9RoZtDXAXDM=
 github.com/chenxifun/logger v1.0.1-0.20210915083252-042226af3599/go.mod h1:AF9pYqM/p7OUZ2+qTUp+NQe8e/gjMh/jqP/b8ZqV1eI=
 github.com/clearcodecn/swaggos v0.0.4-0.20210301085054-939e082a55e1 h1:iukr62YPWNIznp8GZg4xpIYOh4ClzQkchIHKj3yQYYo=

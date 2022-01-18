@@ -86,7 +86,7 @@ func (h *HelloWorld) Say(ctx context.Context,
 func (h *HelloWorld) HowWhat(ctx context.Context,
 	what Td,
 	t tt.Time,
-	sts []string, stt []Td, ks map[string]Td) (string, error) {
+	sts []string, ui int, tis []uint8, b bool, f float32, stt []Td, ks map[string]Td) (string, error) {
 
 	fmt.Println(ctx.Value("User-Agent"))
 
