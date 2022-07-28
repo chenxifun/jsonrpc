@@ -17,7 +17,7 @@ func NewServer(conf config.Config) *Server {
 		log:  log.DefLogger(),
 	}
 
-	s.server = newNETServer(log.DefLogger(), GetTimeouts(&conf))
+	s.server = newNETServer(log.DefLogger(), GetTimeouts(&conf), conf.HeaderKey)
 
 	return s
 }

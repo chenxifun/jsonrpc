@@ -21,16 +21,29 @@ type Server struct {
 	idgen    func() ID
 	run      int32
 	codecs   mapset.Set
+
+	headerKeys map[string]bool
 }
 
 // NewServer creates a new server instance with no registered handlers.
 func NewServer() *Server {
-	server := &Server{codecs: mapset.NewSet(), idgen: randomIDGenerator(), run: 1} //
+	server := &Server{codecs: mapset.NewSet(), idgen: randomIDGenerator(), run: 1, headerKeys: make(map[string]bool)}
+
+	server.AddHeaderKeys("Origin", "User-Agent")
+
 	// Register the default service providing meta information about the RPC service such
 	// as the services and methods it offers.
 	rpcService := &RPCService{server}
 	server.RegisterName(MetadataApi, MetadataVersion, rpcService)
 	return server
+}
+
+func (s *Server) AddHeaderKeys(keys ...string) {
+	for _, key := range keys {
+		if !s.headerKeys[key] {
+			s.headerKeys[key] = true
+		}
+	}
 }
 
 func (s *Server) ModsInfo() []*types.Module {

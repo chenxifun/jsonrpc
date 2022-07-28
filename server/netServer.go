@@ -62,10 +62,12 @@ type netServer struct {
 
 	mode    []string
 	docInfo []*types.Module
+
+	headerKey []string
 }
 
-func newNETServer(log log.Logger, timeouts rpc.HTTPTimeouts) *netServer {
-	h := &netServer{log: log, timeouts: timeouts, handlerNames: make(map[string]string)}
+func newNETServer(log log.Logger, timeouts rpc.HTTPTimeouts, headerKey []string) *netServer {
+	h := &netServer{log: log, timeouts: timeouts, handlerNames: make(map[string]string), headerKey: headerKey}
 	h.httpHandler.Store((*rpcHandler)(nil))
 	h.wsHandler.Store((*rpcHandler)(nil))
 	return h
@@ -222,6 +224,7 @@ func (h *netServer) enableRPC(apis []rpc.API, config httpConfig) error {
 
 	// Create RPC server and handler.
 	srv := rpc.NewServer()
+	srv.AddHeaderKeys(h.headerKey...)
 	if err := RegisterApisFromWhitelist(apis, config.Modules, srv, false); err != nil {
 		return err
 	}
@@ -258,6 +261,7 @@ func (h *netServer) enableWS(apis []rpc.API, config wsConfig) error {
 
 	// Create RPC server and handler.
 	srv := rpc.NewServer()
+	srv.AddHeaderKeys(h.headerKey...)
 	if err := RegisterApisFromWhitelist(apis, config.Modules, srv, false); err != nil {
 		return err
 	}

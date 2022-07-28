@@ -27,6 +27,8 @@ type Config struct {
 	EnableWS  bool
 	EnableRPC bool
 
+	HeaderKey []string
+
 	// ReadTimeout is the maximum duration for reading the entire
 	// request, including the body.
 	//
