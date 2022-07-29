@@ -12,6 +12,11 @@ func DefLogger() Logger {
 	if defLog == nil {
 		defLog = NewLogs()
 	}
+	logger.SetLogger(`{
+		"Console": {
+			"level": "EROR",
+			"color": true
+		}}`)
 	return defLog
 }
 
