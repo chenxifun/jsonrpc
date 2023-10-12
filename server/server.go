@@ -11,15 +11,33 @@ import (
 	"os/signal"
 )
 
-func NewServer(conf config.Config) *Server {
+type ServerOption func(server *Server) error
+
+func WithServerLogger(logger log.Logger) ServerOption {
+	return func(server *Server) error {
+		server.log = logger
+		return nil
+	}
+}
+
+func NewServer(conf config.Config, options ...ServerOption) (*Server, error) {
 	s := &Server{
 		conf: &conf,
-		log:  log.DefLogger(),
 	}
 
-	s.server = newNETServer(log.DefLogger(), GetTimeouts(&conf), conf.HeaderKey)
+	for _, option := range options {
+		if err := option(s); err != nil {
+			return nil, err
+		}
+	}
 
-	return s
+	if s.log == nil {
+		s.log = log.DefLogger()
+	}
+
+	s.server = newNETServer(s.log, GetTimeouts(&conf), conf.HeaderKey)
+
+	return s, nil
 }
 
 type Server struct {
