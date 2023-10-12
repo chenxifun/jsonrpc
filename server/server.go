@@ -86,6 +86,25 @@ func (s *Server) RegisterServices(apis []rpc.API, modules []string) error {
 
 func (s *Server) Start() error {
 
+	if err := s.DoStart(); err != nil {
+		return err
+	}
+
+	defer func() {
+		s.Stop()
+
+	}()
+
+	abortChan := make(chan os.Signal, 1)
+	signal.Notify(abortChan, os.Interrupt)
+
+	sig := <-abortChan
+	fmt.Println("Exiting...", "signal", sig)
+
+	return nil
+}
+
+func (s *Server) DoStart() error {
 	if !s.conf.EnableRPC && !s.conf.EnableWS {
 		return fmt.Errorf("WS and RPC must have one open")
 	}
@@ -100,18 +119,11 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	defer func() {
-		s.server.stop()
-
-	}()
-
-	abortChan := make(chan os.Signal, 1)
-	signal.Notify(abortChan, os.Interrupt)
-
-	sig := <-abortChan
-	fmt.Println("Exiting...", "signal", sig)
-
 	return nil
+}
+
+func (s *Server) Stop() {
+	s.server.stop()
 }
 
 func (s *Server) BuildDoc(d *go_document.Doc) {
